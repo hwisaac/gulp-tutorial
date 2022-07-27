@@ -16,6 +16,9 @@ import miniCSS from "gulp-csso";
 // js 컴파일
 import bro from "gulp-bro";
 import babelify from "babelify";
+// 깃허브
+import ghPages from "gulp-gh-pages";
+
 
 sass.compiler = require("node-sass");
 
@@ -48,8 +51,8 @@ export const pug = () =>
         .pipe(gpug())
         .pipe(gulp.dest(routes.pug.dest));
 
-// build 를 삭제하는 task
-export const clean = () => del(["build/"]);
+// build와 .publish 폴더를 를 삭제하는 task
+export const clean = () => del(["build/", ".publish"]);
 
 const webserver = () => 
     gulp
@@ -87,6 +90,13 @@ const js = () =>
             ]
         }))
         .pipe(gulp.dest(routes.js.dest));
+
+const gh = () =>
+        gulp
+        .src("build/**/*")
+        .pipe(ghPages());
+
+
 // 지켜봐야할 파일을 정한다.
 const watch = () => {
     gulp.watch(routes.pug.watch, pug);
@@ -99,8 +109,15 @@ const watch = () => {
 const prepare = gulp.series([clean, img]);
 const assets = gulp.series([pug, styles, js]);
 // series대신 parallel 을 사용하면 병렬로 동시에 수행한다. 
-const postDev = gulp.parallel([webserver, watch]);
+const live = gulp.parallel([webserver, watch]);
 
-// build 를 지운후 pug 실행한다.
-export const dev = gulp.series([prepare, assets, postDev]);
-// export const dev = gulp.series([pug]);
+
+//scripts
+// yarn build는 prepare과 assets 를 불러온다
+export const build = gulp.series([prepare, assets]);
+
+// dev는 build를 하고 live로 이들을 라이브 서버에 보여줌
+export const dev = gulp.series([build, live]);
+
+// yarn deploy 는 assets을 build하고 배포한 후 clean으로 .publish폴더를 삭제한다.
+export const deploy = gulp.series([build, gh, clean]);

@@ -2,4 +2,6 @@
 
 .next
 
+build/
 node_modules/
+src/img/사진-6.jpg
